@@ -1,6 +1,6 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
  
-function transporter() {
+const transporter = () => {
     return nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -10,7 +10,7 @@ function transporter() {
     });
 };
  
-function sendWelcomeEmail(email, name) {
+export const sendWelcomeEmail = (email, name) => {
     const transporterObject = transporter();
     transporterObject.sendMail({
         from: 'Task Manager API <chubinashvili2003@gmail.com>',
@@ -21,7 +21,7 @@ function sendWelcomeEmail(email, name) {
     });
 };
  
-function sendDeleteEmail(email, name) {
+export const sendDeleteEmail = (email, name) => {
     const transporterObject = transporter();
     transporterObject.sendMail({
         from: 'Task Manager API <chubinashvili2003@gmail.com>',
@@ -32,7 +32,3 @@ function sendDeleteEmail(email, name) {
     });
 };
  
-module.exports = {
-    sendWelcomeEmail,
-    sendDeleteEmail
-};

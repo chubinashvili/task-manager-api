@@ -1,7 +1,11 @@
-const request = require('supertest');
-const app = require('../src/app');
-const User = require('../src/models/user');
-const { userOneId, userOne, setupDatabase } = require('./fixtures/db');
+import request from 'supertest';
+import app from '../src/app';
+import User from '../src/models/user';
+import { 
+    userOneId, 
+    userOne, 
+    setupDatabase 
+} from './fixtures/db';
 
 beforeEach(setupDatabase);
 

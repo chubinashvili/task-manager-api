@@ -1,86 +1,35 @@
-const express = require('express');
-const multer = require('multer');
-const sharp = require('sharp');
-const User = require('../models/user');
-const auth = require('../middleware/auth');
+import express from 'express';
+import multer from 'multer';
+import auth from '../middleware/auth';
+
 const router = new express.Router();
 
-router.post('/users', async (req, res) => {
-    const user = new User(req.body);
-    try {
-        await user.save();
-        const token = await user.generateAuthToken();
-        res.status(201).send({ user, token});
-    } catch (e) {
-        res.status(400).send(e);
-    }
-});
+import { 
+    createUser,
+    deleteUser, 
+    editUser, 
+    getAvatar, 
+    getUser, 
+    loginUser, 
+    logoutAll, 
+    logoutUser, 
+    removeAvatar, 
+    uploadAvatar 
+} from '../controllers/user.js';
 
-router.post('/users/login', async (req, res) => {
-    try {
-        const user = await User.findByCredentials(req.body.email, req.body.password);
-        const token = await user.generateAuthToken();
-        res.send({ user, token });
-    } catch (e) {       
-            res.status(400).send();
-    }
-});
+router.post('/users', createUser);
 
-router.post('/users/logout', auth, async (req, res) => {
-    try {
-        req.user.tokens = req.user.tokens.filter((token) => token.token !== req.token );
-        await req.user.save();
+router.post('/users/login', loginUser);
 
-        res.send();
-    } catch (e) {
-        res.status(500).send();
-    }
-})
+router.post('/users/logout', auth, logoutUser);
 
-router.post('/users/logoutAll', auth, async (req, res) => {
-    try {
-        req.user.tokens = [];
-        await req.user.save();
-        res.send();
-    } catch (e) {
-        res.status(500).send();
-    }
-});
+router.post('/users/logoutAll', auth, logoutAll);
 
-router.get('/users/me', auth, async (req, res) => {
-    res.send(req.user);
-});
+router.get('/users/me', auth, getUser);
 
-router.patch('/users/me', auth, async (req, res) => {
-    const updates = Object.keys(req.body);
-    const allowedUpdates = ['name', 'email', 'password', 'age'];
-    const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
+router.patch('/users/me', auth, editUser);
 
-    if(!isValidOperation){
-        return res.status(400).send({ error: 'Invalid updates!'});
-    }
-
-    try {
-        const user = req.user;
-        if(!user){
-            return res.status(404).send();
-        }
-        updates.forEach((update) => user[update] = req.body[update]);
-        await user.save();
-        res.send(user);
-    } catch (e) {
-        res.status(400).send(e);
-    }
-});
-
-router.delete('/users/me', auth, async (req, res) => {
-    try {
-        await req.user.remove();
-        res.send(req.user);
-    } catch (e) {
-        res.status(500).send();
-    }
-});
+router.delete('/users/me', auth, deleteUser);
 
 const storage = multer.memoryStorage();
 
@@ -97,32 +46,10 @@ const upload = multer({
     storage
 });
 
-router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res) => {
-    const buffer = await sharp(req.file.buffer).resize({ width: 250, height: 250}).png().toBuffer();
-    req.user.avatar = buffer;
-    await req.user.save();
-    res.send();
-}, (error, req, res, next) => {
-    res.status(400).send({ error: error.message });
-});
+router.post('/users/me/avatar', auth, upload.single('avatar'), uploadAvatar);
 
-router.delete('/users/me/avatar', auth, async (req, res) => {
-    req.user.avatar = undefined;
-    await req.user.save();
-    res.send();
-});
+router.delete('/users/me/avatar', auth, removeAvatar);
 
-router.get('/users/:id/avatar', async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user || !user.avatar) {
-            throw new Error();
-        }
-        res.set('Content-Type', 'image/png');
-        res.send(user.avatar);
-    } catch (e) {
-        res.status(404).send();
-    }
-});
+router.get('/users/:id/avatar', getAvatar);
 
-module.exports = router;
+export default router;
